@@ -1,0 +1,12 @@
+{
+  "baseline_l1": 0.03195488648489118,
+  "std_ft_l1": 0.026681306523581347,
+  "freq_ft_l1": 0.02569407179641227,
+  "std_improvement": 16.503203551679867,
+  "freq_improvement": 19.59266759229181,
+  "num_samples": 21,
+  "num_steps": 500,
+  "lr": 1e-05,
+  "low_freq_weight": 5.0,
+  "cutoff_ratio": 0.3
+}

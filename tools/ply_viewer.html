@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>PLY Viewer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1e1e2e; color: #cdd6f4; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+  #toolbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    background: rgba(30,30,46,0.92); backdrop-filter: blur(8px);
+    padding: 10px 20px; display: flex; align-items: center; gap: 14px;
+    border-bottom: 1px solid #45475a;
+  }
+  #toolbar label { font-size: 13px; cursor: pointer; }
+  #toolbar input[type=file] { display: none; }
+  .btn {
+    background: #89b4fa; color: #1e1e2e; border: none; padding: 6px 16px;
+    border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn:hover { background: #74c7ec; }
+  .info { font-size: 12px; color: #a6adc8; margin-left: auto; }
+  #hint {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    text-align: center; color: #6c7086; font-size: 18px; pointer-events: none;
+  }
+  canvas { display: block; }
+  #status {
+    position: fixed; bottom: 12px; left: 20px; font-size: 12px; color: #a6adc8; z-index: 10;
+  }
+  #point-size-ctrl { display: flex; align-items: center; gap: 6px; }
+  #point-size-ctrl input { width: 80px; }
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <label class="btn" for="fileInput">Open PLY</label>
+  <input type="file" id="fileInput" accept=".ply"/>
+  <div id="point-size-ctrl">
+    <label>Point Size:</label>
+    <input type="range" id="pointSize" min="0.5" max="10" step="0.5" value="2"/>
+    <span id="psVal">2</span>
+  </div>
+  <span class="info" id="info"></span>
+</div>
+<div id="hint">拖拽 PLY 文件到此处<br/>或点击 Open PLY 按钮</div>
+<div id="status"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x1e1e2e);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.01, 100);
+camera.position.set(0, 0, 3);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+// lights for mesh
+const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambient);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+dirLight.position.set(2, 4, 3);
+scene.add(dirLight);
+
+let currentObj = null;
+const loader = new PLYLoader();
+const hintEl = document.getElementById('hint');
+const infoEl = document.getElementById('info');
+const statusEl = document.getElementById('status');
+const pointSizeSlider = document.getElementById('pointSize');
+const psValEl = document.getElementById('psVal');
+let pointsMaterial = null;
+
+function clearScene() {
+  if (currentObj) { scene.remove(currentObj); currentObj.geometry?.dispose(); currentObj = null; }
+}
+
+function loadPLY(buffer, name) {
+  clearScene();
+  hintEl.style.display = 'none';
+  statusEl.textContent = 'Loading...';
+  try {
+    const geometry = loader.parse(buffer);
+    geometry.computeBoundingBox();
+    const box = geometry.boundingBox;
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+    geometry.translate(-center.x, -center.y, -center.z);
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const scale = 2.0 / maxDim;
+    geometry.scale(scale, scale, scale);
+
+    const hasIndex = geometry.index !== null;
+    const vertexCount = geometry.attributes.position.count;
+    const hasColors = !!geometry.attributes.color;
+
+    if (hasIndex) {
+      // Mesh mode
+      geometry.computeVertexNormals();
+      const mat = new THREE.MeshStandardMaterial({
+        vertexColors: hasColors,
+        color: hasColors ? 0xffffff : 0x89b4fa,
+        side: THREE.DoubleSide,
+      });
+      currentObj = new THREE.Mesh(geometry, mat);
+      pointsMaterial = null;
+      infoEl.textContent = `${name} | Mesh: ${vertexCount} verts, ${geometry.index.count / 3} faces`;
+    } else {
+      // Point cloud mode
+      pointsMaterial = new THREE.PointsMaterial({
+        size: parseFloat(pointSizeSlider.value) * 0.01,
+        vertexColors: hasColors,
+        color: hasColors ? 0xffffff : 0x89b4fa,
+        sizeAttenuation: true,
+      });
+      currentObj = new THREE.Points(geometry, pointsMaterial);
+      infoEl.textContent = `${name} | Point Cloud: ${vertexCount} points`;
+    }
+    scene.add(currentObj);
+    camera.position.set(0, 0, 3);
+    controls.reset();
+    statusEl.textContent = '';
+  } catch (e) {
+    statusEl.textContent = 'Error: ' + e.message;
+    console.error(e);
+  }
+}
+
+// file input
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  file.arrayBuffer().then(buf => loadPLY(buf, file.name));
+});
+
+// drag & drop
+document.body.addEventListener('dragover', e => { e.preventDefault(); });
+document.body.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.ply')) {
+    file.arrayBuffer().then(buf => loadPLY(buf, file.name));
+  }
+});
+
+// point size
+pointSizeSlider.addEventListener('input', () => {
+  const v = parseFloat(pointSizeSlider.value);
+  psValEl.textContent = v;
+  if (pointsMaterial) pointsMaterial.size = v * 0.01;
+});
+
+// resize
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// render loop
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

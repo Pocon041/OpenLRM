@@ -1,0 +1,105 @@
+# ========== Python ==========
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+.Python
+*.so
+
+# ========== 虚拟环境 ==========
+/venv/
+/.venv/
+/env/
+/.env
+*.envrc
+
+# ========== 编辑器与系统 ==========
+.vscode/
+.idea/
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+*.~*
+
+# ========== 构建产物 ==========
+/build/
+/dist/
+*.exe
+*.dll
+*.dylib
+
+# ========== 日志与缓存 ==========
+*.log
+*.tmp
+*.cache
+*.db
+*.sqlite
+
+# ========== 模型权重（大文件，从 HuggingFace 拉取） ==========
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.onnx
+/dumps/
+/checkpoints/
+/pretrained/
+
+# ========== 三维原始数据 ==========
+/data/glbs/
+/data/rendered/
+/data/objaverse/
+/data/*.zip
+/data/*.tar
+*.glb
+*.obj
+*.fbx
+*.usd
+*.usdz
+
+# ========== 实验中间产物 ==========
+/exps/gt_triplane/*.pt
+/exps/gt_triplane/*.npy
+/exps/**/checkpoint_*.pt
+/exps/**/checkpoint_*.pth
+/exps/**/*.ply
+*.npz
+
+# 但保留实验图片用于论文引用（PNG/JSON 显式保留）
+!/exps/**/*.png
+!/exps/**/*.jpg
+!/exps/**/*.json
+
+# ========== 论文与笔记 Markdown（仅本地，README 例外） ==========
+*.md
+!README.md
+!/README.md
+
+# ========== HuggingFace / Torch 缓存 ==========
+.cache/
+huggingface/
+torch_cache/
+
+# ========== 渲染输出（Blender 中间） ==========
+/data/render_log.txt
+*.blend1
+*.blend2
+
+# ========== Jupyter ==========
+*.ipynb_checkpoints
+
+# ========== 秘钥与配置 ==========
+*.secret
+.env.local
+config.local.*
+
+# ========== 包管理 ==========
+node_modules/
+yarn.lock
+package-lock.json

@@ -1,0 +1,14 @@
+lpips
+omegaconf
+transformers
+safetensors
+accelerate
+imageio[ffmpeg]
+PyMCubes
+trimesh
+megfile
+opencv-python
+optimum[onnxruntime-gpu]
+rembg[gpu,cli]
+httpx[socks]
+tensorboard
