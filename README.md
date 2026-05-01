@@ -1,8 +1,70 @@
-# OpenLRM: Open-Source Large Reconstruction Models
+# OpenLRM-Refine: 前馈式三维重建中的频谱阻抗失配研究
+
+> 这是 [3DTopia/OpenLRM](https://github.com/3DTopia/OpenLRM) 的研究分支。本仓库在原始 OpenLRM 推理与训练管线基础上，加入了一套针对编码器误差结构与解码器频谱响应的诊断与修正实验代码，配套实验结果与论文草稿位于 `exps/` 目录。原版 OpenLRM 的 README 保留在下方供查阅。
 
 [![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-yellow.svg)](LICENSE)
 [![Weight License](https://img.shields.io/badge/Weight%20License-CC%20By%20NC%204.0-red)](LICENSE_WEIGHT)
 [![LRM](https://img.shields.io/badge/LRM-Arxiv%20Link-green)](https://arxiv.org/abs/2311.04400)
+
+## 研究概要
+
+本工作以 OpenLRM-Mix-Base-1.1 为研究对象，量化诊断了前馈式编码器-解码器三维重建管线中的**频谱阻抗失配（Spectral Impedance Mismatch）** 现象，并提出参数高效的 **LoRA-FreqLoss** 微调方案。核心发现：
+
+- **失配现象**：编码器残差以高频为主（占 47–52% 能量），解码器却为低通放大器（低频敏感度是高频的 2.4 倍）。结果是仅 15–17% 的低频残差贡献了 53–77% 的渲染退化。
+- **等价类陷阱**：Triplane 优化景观存在被 L1 距离约 2.0 分隔的多个等价盆地。直接以随机初始化的 Oracle 做残差分析等同于比较两个无关解。本文提出 `pred-init` 锚定策略消除该混淆。
+- **低维误差结构**：渲染相关的编码器误差栖身于极低维子空间（rank-4 LoRA 的 147K 参数即可达到 LPIPS 全局最优）。
+- **LoRA-FreqLoss 修正**：仅用全模型 0.09% 的可训练参数实现 LPIPS 11.4% 提升、PSNR +1.9 dB、L1 -16.6%，且无任何样本退化。
+
+## 复现关键实验
+
+新增的实验脚本均在 `scripts/` 目录下，结果可视化在 `exps/`。完整方法论见仓库根目录 `实验二报告.md`（论文草稿）。
+
+```bash
+# 1. 下载 Objaverse 物体并用 Blender 渲染 32 视角（参考脚本）
+python scripts/render_objaverse_subset.py
+
+# 2. 优化 Pred-Init Oracle Triplane（核心方法论修正）
+python scripts/optimize_gt_triplane.py \
+    --data_dir ./data/rendered/<uid> \
+    --output_dir ./exps/gt_triplane \
+    --num_iters 2000 --lr 0.01 \
+    --init_from_pred
+
+# 3. 频段选择性因果干预（验证频谱阻抗失配）
+python scripts/spatial_frequency_analysis.py \
+    --triplane_path ./exps/gt_triplane/<uid>_triplane.pt
+
+# 4. 解码器频谱传递函数 H(f) 测量
+python scripts/decoder_sensitivity_and_calibration.py \
+    --triplane_path ./exps/gt_triplane/<uid>_triplane.pt
+
+# 5. LoRA-FreqLoss 微调（主方案）
+python scripts/finetune_lora_freq.py \
+    --rank 4 --freq_weight 5.0 --freq_cutoff 0.3 \
+    --steps 500 --lr 5e-4
+
+# 6. LoRA Rank 消融
+python scripts/lora_rank_ablation.py
+```
+
+## 实验结果索引
+
+| 子目录 | 内容 |
+|---|---|
+| `exps/residual_vis/` | Triplane 残差热力图与 3D 表面误差点云 |
+| `exps/frequency_analysis_predinit/` | Pred-Init 基准下的 Triplane 残差功率谱 |
+| `exps/decoder_analysis/` | 解码器频谱传递函数 $H(f)$ 经验测量 |
+| `exps/spatial_freq/` | 频段选择性因果干预（低频/高频修正对比） |
+| `exps/lowfreq_decomp/` | DC 与结构化低频的内部分解 |
+| `exps/latent_refine/` | 测试时优化（TTO）失败案例 |
+| `exps/finetune_freq_v2/` | 全量微调对照实验 |
+| `exps/lora_freq/` | LoRA-FreqLoss 主实验 |
+| `exps/lora_ablation/` | LoRA Rank 消融（r ∈ {2, 4, 8, 16, 32}）|
+| `exps/visibility_analysis/` | 可见性分组的误差对比（排除遮挡假设）|
+
+---
+
+# 原始 OpenLRM README
 
 [![HF Models](https://img.shields.io/badge/Models-Huggingface%20Models-bron)](https://huggingface.co/zxhezexin)
 [![HF Demo](https://img.shields.io/badge/Demo-Huggingface%20Demo-blue)](https://huggingface.co/spaces/zxhezexin/OpenLRM)
