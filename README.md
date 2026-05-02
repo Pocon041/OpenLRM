@@ -30,15 +30,15 @@ python scripts/optimize_gt_triplane.py \
     --num_iters 2000 --lr 0.01 \
     --init_from_pred
 
-# 3. 频段选择性因果干预（验证频谱阻抗失配）
+# 3. 验证频谱不一致
 python scripts/spatial_frequency_analysis.py \
     --triplane_path ./exps/gt_triplane/<uid>_triplane.pt
 
-# 4. 解码器频谱传递函数 H(f) 测量
+# 4. 解码器频谱函数 H(f) 测量
 python scripts/decoder_sensitivity_and_calibration.py \
     --triplane_path ./exps/gt_triplane/<uid>_triplane.pt
 
-# 5. LoRA-FreqLoss 微调（主方案）
+# 5. LoRA-FreqLoss 微调
 python scripts/finetune_lora_freq.py \
     --rank 4 --freq_weight 5.0 --freq_cutoff 0.3 \
     --steps 500 --lr 5e-4
