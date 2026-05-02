@@ -1,4 +1,4 @@
-# OpenLRM-Refine: 前馈式三维重建中的频域不匹配 —— 解码器敏感度诊断与编码器误差修正
+# OpenLRM-Refine: 前馈三维重建的频域不匹配分析与修正
 
 > 这是 [3DTopia/OpenLRM](https://github.com/3DTopia/OpenLRM) 的研究分支。本仓库在原始 OpenLRM 推理与训练管线基础上，加入了一套针对编码器误差结构与解码器频谱响应的诊断与修正实验代码，配套实验结果与论文草稿位于 `exps/` 目录。原版 OpenLRM 的 README 保留在下方供查阅。
 
