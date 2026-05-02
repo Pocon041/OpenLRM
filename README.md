@@ -62,6 +62,26 @@ python scripts/lora_rank_ablation.py
 | `exps/lora_ablation/` | LoRA Rank 消融（r ∈ {2, 4, 8, 16, 32}）|
 | `exps/visibility_analysis/` | 可见性分组的误差对比（排除遮挡假设）|
 
+## 脚本功能索引
+
+下表列出所有新增实验脚本与其在论文中对应的章节/图表产出。
+
+| 脚本 | 职责 | 产出目录 / 对应图 |
+|---|---|---|
+| `scripts/render_objaverse_subset.py` | 从 Objaverse 下载物体并用 Blender 渲染 32 视角 | `data/rendered/<uid>/` |
+| `scripts/optimize_gt_triplane.py` | 基于多视角渲染 L2 优化 Pred-Init Oracle Triplane $T_{GT}$ | `exps/gt_triplane/` |
+| `scripts/visualize_triplane_residual.py` | Triplane 残差热力图 + 3D 表面误差点云 | `exps/residual_vis/` · `fig:residual-heatmap` |
+| `scripts/visibility_aware_analysis.py` | 可见性分组的残差对比（排除遮挡假设） | `exps/visibility_analysis/` · `fig:visibility` |
+| `scripts/frequency_analysis.py` | Triplane 特征空间频率分解（Pred-Init 基准） | `exps/frequency_analysis_predinit/` · `fig:cross-sample-freq` |
+| `scripts/decoder_sensitivity_and_calibration.py` | Decoder 频谱传递函数 $H(f)$ 经验测量 + 全局缩放校准 | `exps/decoder_analysis/` · `fig:decoder-sens` |
+| `scripts/spatial_frequency_analysis.py` | 频段选择性因果干预（仅修正低频 / 仅修正高频） | `exps/spatial_freq/` · `fig:correction-effect` |
+| `scripts/lowfreq_decomposition.py` | 低频内部结构分解（DC 与结构化低频） | `exps/lowfreq_decomp/` · `fig:lowfreq-decomp` |
+| `scripts/latent_space_refinement.py` | 潜空间测试时优化（TTO）失败案例 | `exps/latent_refine/` · `fig:tto` |
+| `scripts/finetune_freq_loss.py` | 全量微调 + 频率加权损失（样本退化对照） | `exps/finetune_freq_v2/` · `fig:fullft-comparison` |
+| **`scripts/finetune_lora_freq.py`** | **LoRA-FreqLoss 主方法**（Std MSE vs FreqLoss 对照） | `exps/lora_freq/` · `fig:convergence` |
+| `scripts/lora_rank_ablation.py` | LoRA Rank 消融（r ∈ {2, 4, 8, 16, 32}） | `exps/lora_ablation/` · `fig:rank-ablation` |
+| `scripts/visualize_finetune_multi.py` | 多样本多视角渲染对比总览图 | `exps/finetune_freq_v2/render_comparison_labeled.png` |
+
 ---
 
 # 原始 OpenLRM README
